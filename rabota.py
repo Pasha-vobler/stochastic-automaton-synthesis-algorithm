@@ -1,7 +1,6 @@
 from fractions import Fraction
 from dataclasses import dataclass
 from typing import List, Tuple, Dict, Set
-import functools
 
 
 @dataclass(frozen=True)
@@ -116,7 +115,6 @@ class RegexParser:
 
         raise ValueError(f'unexpected char {ch!r} at {self.pos}')
 
-
     def _parse_number(self) -> Fraction:
         s = ''
         while self._peek().isdigit() or self._peek() == '.':
@@ -130,7 +128,6 @@ class RegexParser:
             while self._peek().isdigit():
                 s += self._consume()
         return s
-
 
 
 def ast_to_canonical(node: ASTNode) -> CanonicalForm:
@@ -176,9 +173,8 @@ class AutomatonBuilder:
 
     def __init__(self):
         self.states: List[CanonicalForm] = []
-        self.id_of: Dict[int, int] = {}        # hash(cf) -> state_id
-        self.tr: Dict[Tuple[int, str], List[Tuple[int, Fraction]]] = {}  # (from,sym) -> [(to,p)]
-
+        self.id_of: Dict[int, int] = {}
+        self.tr: Dict[Tuple[int, str], List[Tuple[int, Fraction]]] = {}
         self._cache: Dict[Tuple[int, str], Dict[CanonicalForm, Fraction]] = {}
 
     def build(self, initial: CanonicalForm, alphabet: Set[str]):
@@ -216,7 +212,6 @@ class AutomatonBuilder:
                 continue
             self.tr[key] = [(to, w / total) for to, w in lst]
 
-
     def print_transitions(self):
         n = len(self.states)
         syms = sorted({s for (_, s) in self.tr})
@@ -237,8 +232,7 @@ class AutomatonBuilder:
                 print(f"a{i:<2} | " + "".join(f"{float(p):>10.4f}" for p in row))
             print()
 
-
-    def _prob(self, i: int, sym: str, j: int) -> Fraction:
+    def _prob(self, i: int, sym: str, j: int) -> int:
         return sum(p for to, p in self.tr.get((i, sym), []) if to == j)
 
     def _derive_distribution(self, cf: CanonicalForm, sym: str) -> Dict[CanonicalForm, Fraction]:
@@ -265,17 +259,9 @@ class AutomatonBuilder:
 
 if __name__ == "__main__":
     regex = "(0.003x1(0.09x1(0.4x1|0.1x2)*x1|0.2x1)*x2(0.3x1|0.7x2)*x1|0.21x1(0.3x1|0.6x2)*x1x2)*"
-
     parser = RegexParser(regex)
     ast = parser.parse()
     initial_cf = ast_to_canonical(ast).normalize()
-
     builder = AutomatonBuilder()
     builder.build(initial_cf, {'x1', 'x2'})
     builder.print_transitions()
-
-
-
-
-
-
